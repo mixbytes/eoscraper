@@ -5,8 +5,6 @@
 #ifndef DLEQ_PROOF_HH
 #define DLEQ_PROOF_HH
 
-#include <eosiolib/eosio.hpp>
-
 #include <array>
 #include <cstring>
 #include <vector>
@@ -20,7 +18,7 @@ struct Proof {
     Point h, z;
     Point a, b;
 
-    std::vector<std::pair<uint256_t, uint256_t>> cr;
+    UInt256 c, r;
 
     bool verify() {
         if (!h.isOnCurve() || !g.isOnCurve())
@@ -29,29 +27,26 @@ struct Proof {
         if (!z.isOnCurve() || !m.isOnCurve())
             return false;
 
-        for (auto pair: cr) {
-            auto ch = h.scalarMult(pair.first);
-            auto rg = g.scalarMult(pair.second);
-            auto aa = rg.add(ch);
+        auto ch = h.scalarMult(c);
+        auto rg = g.scalarMult(r);
+        auto aa = rg.add(ch);
 
-            auto cz = z.scalarMult(pair.first);
-            auto rm = m.scalarMult(pair.second);
-            auto bb = rm.add(cz);
+        auto cz = z.scalarMult(c);
+        auto rm = m.scalarMult(r);
+        auto bb = rm.add(cz);
 
-            if (a != aa || b != bb)
-                return false;
-        }
+        return (a == aa && b == bb);
 
-        return true;
     }
 
-    static Proof generate(Point g, Point m, uint256_t x, std::vector<uint256_t> const & cList) {
+    /*
+    static Proof generate(Point g, Point m, UInt256 x, std::vector<UInt256> const & cList) {
         // s must be large then Curve.N
-        uint256_t s = Secp256k1.n;
-        s += 1234;
+        UInt256 s = Secp256k1.n;
+        s = s + UInt256(rand());
 
-        std::vector<std::pair<uint256_t, uint256_t>> cr;
-        uint256_t cc, rr;
+        std::vector<std::pair<UInt256, UInt256>> cr;
+        UInt256 cc, rr;
         for (auto c: cList) {
             cc = c % Secp256k1.n;
             rr = (s - cc * x) % Secp256k1.n;
@@ -68,6 +63,7 @@ struct Proof {
             std::move(cr)
         };
     }
+     */
 };
 
 #endif //DLEQ_PROOF_HH
